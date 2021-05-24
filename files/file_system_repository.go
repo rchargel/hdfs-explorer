@@ -2,67 +2,117 @@ package files
 
 import (
 	"encoding/gob"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // FileSystemRepository is used to load/store/find all of the previously configured FileSystems.
 type FileSystemRepository interface {
-	List() []FileSystem
-	FindByName(name string) []FileSystem
+	List() ([]FileSystem, error)
+	FindByName(name string) (*FileSystem, error)
+	Remove(name string) error
 	Store(fileSystem FileSystem) error
 }
 
 type fileSystemRepository struct {
-	path       string
-	registered []FileSystem
+	path string
 }
 
-func (f *fileSystemRepository) List() []FileSystem {
-	return f.registered
+func (f *fileSystemRepository) List() ([]FileSystem, error) {
+	return f.load()
 }
 
-func (f *fileSystemRepository) FindByName(name string) []FileSystem {
-	filtered := []FileSystem{}
-
-	for _, value := range f.registered {
-		if strings.Contains(strings.ToLower(value.Name), strings.ToLower(name)) {
-			filtered = append(filtered, value)
+func (f *fileSystemRepository) FindByName(name string) (*FileSystem, error) {
+	if values, err := f.load(); err == nil {
+		for _, value := range values {
+			if value.Name == name {
+				return &value, nil
+			}
 		}
+	} else {
+		return nil, err
 	}
-	return filtered
+	return nil, errors.New(fmt.Sprintf("Could not find a FileSystem named %v", name))
+}
+
+func (f *fileSystemRepository) Remove(name string) error {
+	if values, err := f.load(); err == nil {
+		saved := make([]FileSystem, 0)
+		for _, value := range values {
+			if value.Name != name {
+				saved = append(saved, value)
+			}
+		}
+
+		return f.save(saved)
+	} else {
+		return err
+	}
 }
 
 func (f *fileSystemRepository) Store(fileSystem FileSystem) error {
-	found := false
-	for index := range f.registered {
-		if f.registered[index].Name == fileSystem.Name {
-			f.registered[index] = fileSystem
-			found = true
-			break
+	log.Printf("Storing file system: %v", fileSystem.Name)
+	if values, err := f.load(); err == nil {
+		saved := make([]FileSystem, 0)
+		added := false
+		for _, value := range values {
+			if value.Name == fileSystem.Name {
+				saved = append(saved, fileSystem)
+				added = true
+			} else {
+				saved = append(saved, value)
+			}
 		}
+		if !added {
+			saved = append(saved, fileSystem)
+		}
+		return f.save(saved)
+	} else {
+		return err
 	}
-	if !found {
-		f.registered = append(f.registered, fileSystem)
-	}
-	return f.save()
 }
 
-func (f *fileSystemRepository) save() error {
-	if file, err := os.Create(f.path); err != nil {
-		return nil
-	} else {
+func (f *fileSystemRepository) load() ([]FileSystem, error) {
+	fileSystems := make([]FileSystem, 0)
+
+	if file, err := os.Open(f.path); err == nil {
 		defer file.Close()
-		enc := gob.NewEncoder(file)
-		for _, value := range f.registered {
+		dec := gob.NewDecoder(file)
+		fs := &FileSystem{}
+		for {
+			err := dec.Decode(fs)
+			if err != nil {
+				break
+			}
+
+			fileSystems = append(fileSystems, *fs)
+		}
+	} else {
+		return nil, err
+	}
+
+	return fileSystems, nil
+}
+
+func (f *fileSystemRepository) save(fileSystems []FileSystem) error {
+	if tmp, err := ioutil.TempFile("", "filerepo*.tmp"); err == nil {
+		enc := gob.NewEncoder(tmp)
+		for _, value := range fileSystems {
 			err = enc.Encode(value)
 			if err != nil {
 				return err
 			}
 		}
+		tmp.Close()
+		os.Remove(f.path)
+		return os.Rename(tmp.Name(), f.path)
+	} else {
+		return err
 	}
-	return nil
 }
 
 // GetFileSystemRepository loads an instance of the FileSystemRepository interface.
@@ -76,21 +126,10 @@ func GetFileSystemRepository() (FileSystemRepository, error) {
 // GetFileSystemRepositoryFromPath loads an instance of the FileSystemRepository found at a specified
 // location.
 func GetFileSystemRepositoryFromPath(path string) (FileSystemRepository, error) {
-	if file, err := GetOrCreateFile(path); err != nil {
-		return nil, err
+	if file, err := GetOrCreateFile(path); err == nil {
+		file.Close()
+		return &fileSystemRepository{path}, nil
 	} else {
-		defer file.Close()
-		dec := gob.NewDecoder(file)
-		var fileSystem *FileSystem
-
-		values := []FileSystem{}
-		for {
-			err := dec.Decode(fileSystem)
-			if err != nil {
-				break
-			}
-			values = append(values, *fileSystem)
-		}
-		return &fileSystemRepository{path, values}, nil
+		return nil, err
 	}
 }

@@ -25,7 +25,6 @@ func main() {
 		Name:        "My FS",
 		Description: "A simple description",
 		Addresses:   []string{"localhost:9000"},
-		User:        "rchargel",
 	}
 	if conn, err := fs.Connect(); err == nil {
 		values, _ := conn.List("/rmstate/FSRMStateRoot")
