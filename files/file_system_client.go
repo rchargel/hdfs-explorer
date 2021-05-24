@@ -51,9 +51,8 @@ func (f *hdfsFileSystemClient) MakeDir(path string, permission os.FileMode) erro
 }
 
 func (f *hdfsFileSystemClient) List(path string) ([]HdfsFileInfo, error) {
-	if files, err := f.client.ReadDir(path); err != nil {
-		return nil, err
-	} else {
+	files, err := f.client.ReadDir(path)
+	if err == nil {
 		hdfsFiles := make([]HdfsFileInfo, len(files))
 
 		for idx, value := range files {
@@ -61,6 +60,7 @@ func (f *hdfsFileSystemClient) List(path string) ([]HdfsFileInfo, error) {
 		}
 		return hdfsFiles, nil
 	}
+	return nil, err
 }
 
 func (f *hdfsFileSystemClient) Delete(path string) error {

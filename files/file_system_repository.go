@@ -2,7 +2,6 @@ package files
 
 import (
 	"encoding/gob"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -36,7 +35,7 @@ func (f *fileSystemRepository) FindByName(name string) (*FileSystem, error) {
 	} else {
 		return nil, err
 	}
-	return nil, errors.New(fmt.Sprintf("Could not find a FileSystem named %v", name))
+	return nil, fmt.Errorf("Could not find a FileSystem named %v", name)
 }
 
 func (f *fileSystemRepository) Remove(name string) error {

@@ -21,37 +21,37 @@ type FileSystem struct {
 }
 
 func (r *FileSystem) user() (string, error) {
-	if user, err := user.Current(); err == nil {
+	user, err := user.Current()
+	if err == nil {
 		return user.Username, nil
-	} else {
-		return "", err
 	}
+	return "", err
 }
 
 // Connect opens a FileSystemClient.
 func (r *FileSystem) Connect() (FileSystemClient, error) {
-	if user, err := r.user(); err == nil {
+	user, err := r.user()
+	if err == nil {
 		if conn, nerr := rpc.NewNamenodeConnectionWithOptions(
 			rpc.NamenodeConnectionOptions{
 				Addresses: r.Addresses,
 				User:      user,
 			},
 		); nerr == nil {
-			if client, cerr := hdfs.NewClient(
+			client, cerr := hdfs.NewClient(
 				hdfs.ClientOptions{
 					Addresses: r.Addresses,
 					Namenode:  conn,
 					User:      user,
 				},
-			); cerr == nil {
+			)
+			if cerr == nil {
 				return CreateHDFSFileSystemClient(client), err
-			} else {
-				return nil, cerr
 			}
+			return nil, cerr
 		} else {
 			return nil, nerr
 		}
-	} else {
-		return nil, err
 	}
+	return nil, err
 }
