@@ -1,0 +1,27 @@
+on: [push, pull_request]
+name: Test Build
+env:
+  GOPROXY: https://proxy.golang.org
+  GO111MODULE: on
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix: 
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        version: [1.16.x]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with: 
+          stable: 'false'
+          go-version: ${{ matrix.version }}
+      - name: Add Ubuntu Packages
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: sudo apt-get install libgl1-mesa-dev xorg-dev
+      - name: Setup Dependencies
+        run: go mod tidy
+      - name: Run Tests
+        run: go test ./...
