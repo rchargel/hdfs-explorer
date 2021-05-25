@@ -5,7 +5,5 @@ import (
 )
 
 func main() {
-	win := ui.CreateApp()
-
-	win.ShowAndRun()
+	ui.Window.ShowAndRun()
 }

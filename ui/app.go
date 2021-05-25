@@ -6,15 +6,17 @@ import (
 	"fyne.io/fyne/v2/theme"
 )
 
-func CreateApp() fyne.Window {
-	app := app.New()
-	app.Settings().SetTheme(theme.DarkTheme())
+var (
+	Application fyne.App
+	Window      fyne.Window
+)
 
-	win := app.NewWindow("HDFS Explorer")
-	win.SetMainMenu(MakeMainMenu(win))
+func init() {
+	Application = app.New()
+	Application.Settings().SetTheme(theme.DarkTheme())
 
-	win.Resize(fyne.NewSize(700, 400))
-	win.CenterOnScreen()
-
-	return win
+	Window = Application.NewWindow("HDFS Explorer")
+	Window.SetMainMenu(MakeMainMenu())
+	Window.Resize(fyne.NewSize(700, 400))
+	Window.CenterOnScreen()
 }
