@@ -3,6 +3,7 @@ name: Test Build
 env:
   GOPROXY: https://proxy.golang.org
   GO111MODULE: on
+  HOME_OVERRIDE: ./homedir
 jobs:
   build:
     runs-on: ${{ matrix.os }}

@@ -4,9 +4,11 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/rchargel/hdfs-explorer/base"
+	"github.com/rchargel/hdfs-explorer/log"
 )
 
 // FileSystemRepository is used to load/store/find all of the previously configured FileSystems.
@@ -54,7 +56,8 @@ func (f *fileSystemRepository) Remove(name string) error {
 }
 
 func (f *fileSystemRepository) Store(fileSystem FileSystem) error {
-	log.Printf("Storing file system: %v", fileSystem.Name)
+	log.Info.Printf("Storing New File System %v", fileSystem.Name)
+
 	if values, err := f.load(); err == nil {
 		saved := make([]FileSystem, 0)
 		added := false
@@ -117,9 +120,8 @@ func (f *fileSystemRepository) save(fileSystems []FileSystem) error {
 // GetFileSystemRepository loads an instance of the FileSystemRepository interface.
 // This call will default to reading the data from $HOME/.fsrepo/fs.repo.
 func GetFileSystemRepository() (FileSystemRepository, error) {
-	dir, _ := os.UserHomeDir()
-	filepath.Join(dir, ".fsrepo", "fs.repo")
-	return GetFileSystemRepositoryFromPath(dir)
+	repoFile := filepath.Join(base.HomeDir, "fs.repo")
+	return GetFileSystemRepositoryFromPath(repoFile)
 }
 
 // GetFileSystemRepositoryFromPath loads an instance of the FileSystemRepository found at a specified
