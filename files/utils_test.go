@@ -56,29 +56,42 @@ func TestGetOrCreateFile(t *testing.T) {
 	file.WriteString("This is a line of text")
 	file.Close()
 
-	if f, err := GetOrCreateFile(file.Name()); err != nil {
-		t.Errorf("Should not be an error: %v", err.Error())
-	} else {
-		data, _ := ioutil.ReadFile(f.Name())
-		t.Logf("File length is %d", len(data))
-		if len(data) == 0 || string(data) != "This is a line of text" {
-			t.Error("File should already have content")
-		}
-		f.Close()
-	}
+	validateContent(t, file.Name(), "This is a line of text")
 
-	if err := os.Remove(file.Name()); err != nil {
-		t.Errorf("Unable to remove file: %v", err.Error())
-	}
-
-	if f, err := GetOrCreateFile(file.Name()); err != nil {
-		t.Errorf("Should not be an error: %v", err.Error())
-	} else {
-		data, _ := ioutil.ReadFile(f.Name())
-		if len(data) != 0 {
-			t.Errorf("File should be empty but was %d", len(data))
-		}
-		f.Close()
-	}
+	removeFile(t, file.Name())
+	validateEmptyFile(t, file.Name())
 	os.Remove(file.Name())
+}
+
+func validateContent(t *testing.T, path, content string) {
+	f, err := GetOrCreateFile(path)
+	defer f.Close()
+
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	} else if data, _ := ioutil.ReadFile(f.Name()); string(data) != content {
+		t.Errorf("File should have the content %v but was %v", content, string(data))
+		t.Fail()
+	}
+}
+
+func validateEmptyFile(t *testing.T, path string) {
+	f, err := GetOrCreateFile(path)
+	defer f.Close()
+
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	} else if data, _ := ioutil.ReadFile(f.Name()); len(data) != 0 {
+		t.Errorf("File should be empty but was %d bytes", len(data))
+		t.Fail()
+	}
+}
+
+func removeFile(t *testing.T, path string) {
+	if err := os.Remove(path); err != nil {
+		t.Errorf("Unable to remove file: %v", err.Error())
+		t.Fail()
+	}
 }
