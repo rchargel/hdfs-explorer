@@ -4,11 +4,19 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/theme"
+	"github.com/rchargel/hdfs-explorer/log"
 )
 
 var (
 	Application fyne.App
 	Window      fyne.Window
+
+	onClosedFunc func() = func() {
+		ShowConfirm("Quit?", "Are you certain you wish to exit?", func() {
+			log.Info.Print("Exiting application by user request")
+			Window.Close()
+		})
+	}
 )
 
 func init() {
@@ -17,6 +25,9 @@ func init() {
 
 	Window = Application.NewWindow("HDFS Explorer")
 	Window.SetMainMenu(MakeMainMenu())
-	Window.Resize(fyne.NewSize(700, 400))
+	Window.SetIcon(resourceLogoPng)
+	Window.Resize(fyne.NewSize(700, 500))
+
 	Window.CenterOnScreen()
+	Window.SetCloseIntercept(onClosedFunc)
 }
