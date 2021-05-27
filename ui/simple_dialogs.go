@@ -4,6 +4,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/rchargel/hdfs-explorer/log"
 )
@@ -29,16 +30,17 @@ func ShowConfirm(title, text string, callback func()) {
 	).Show()
 }
 
-func ShowCustomDialog(title string, content fyne.CanvasObject, buttons ...*widget.Button) {
+func NewCustomDialog(title string, content fyne.CanvasObject, buttons ...*widget.Button) *widget.PopUp {
 	var modal *widget.PopUp
 
 	closeButton := widget.NewButton(
 		"Close",
 		func() { modal.Hide() },
 	)
-	buttonList := make([]fyne.CanvasObject, len(buttons)+1)
-	buttonList[0] = closeButton
-	idx := 1
+	buttonList := make([]fyne.CanvasObject, len(buttons)+2)
+	buttonList[0] = layout.NewSpacer()
+	buttonList[1] = closeButton
+	idx := 2
 	for _, button := range buttons {
 		buttonList[idx] = button
 		idx++
@@ -52,5 +54,5 @@ func ShowCustomDialog(title string, content fyne.CanvasObject, buttons ...*widge
 		content,
 	)
 	modal = widget.NewModalPopUp(container, Window.Canvas())
-	modal.Show()
+	return modal
 }

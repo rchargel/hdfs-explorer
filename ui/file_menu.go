@@ -4,6 +4,8 @@ import (
 	"fyne.io/fyne/v2"
 )
 
+var fileRepoDialog *FileRepoManagerDialog = NewFileRepoManagerDialog()
+
 func MakeMainMenu() *fyne.MainMenu {
 	return fyne.NewMainMenu(
 		makeConnectionMenu(),
@@ -14,7 +16,7 @@ func makeConnectionMenu() *fyne.Menu {
 	manageConnections := &fyne.MenuItem{
 		Label: "Manage Connections",
 		Action: func() {
-			OpenFileSystemRepoManager()
+			fileRepoDialog.Open()
 		},
 	}
 

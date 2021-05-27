@@ -12,19 +12,36 @@ import (
 	"github.com/rchargel/hdfs-explorer/log"
 )
 
-var fileSystemRepo files.FileSystemRepository
+type FileRepoManagerDialog struct {
+	Title          string
+	popup          *widget.PopUp
+	fileSystemRepo files.FileSystemRepository
+	fsList         binding.DataList
+	name           binding.String
+	description    binding.String
+	addresses      binding.String
+}
 
-func init() {
+func NewFileRepoManagerDialog() *FileRepoManagerDialog {
 	repository, err := files.GetFileSystemRepository()
 
 	if err != nil {
 		log.Error.Fatal(err)
 	}
-	fileSystemRepo = repository
+	dialog := &FileRepoManagerDialog{}
+	dialog.Title = "Connections"
+	dialog.fileSystemRepo = repository
+	fileSystems := binding.BindStringList(dialog.fileSystemNames())
+	dialog.fsList = fileSystems
+	dialog.name = binding.BindString(nil)
+	dialog.description = binding.BindString(nil)
+	dialog.addresses = binding.BindString(nil)
+
+	return dialog
 }
 
-func fileSystemNames() *[]string {
-	list, err := fileSystemRepo.List()
+func (d *FileRepoManagerDialog) fileSystemNames() *[]string {
+	list, err := d.fileSystemRepo.List()
 	if err != nil {
 		ShowFatalError(err)
 	}
@@ -35,34 +52,32 @@ func fileSystemNames() *[]string {
 	return &names
 }
 
-func OpenFileSystemRepoManager() {
-	fileSystems := binding.BindStringList(fileSystemNames())
-	name := binding.BindString(nil)
-	description := binding.BindString(nil)
-	addresses := binding.BindString(nil)
-
-	fsList := fileSystemList(fileSystems)
-	form := createForm(name, description, addresses)
-	dialog := container.NewHBox(fsList, form)
-
-	ShowCustomDialog(
-		"Connections",
-		dialog,
-		widget.NewButton("New", func() {
-			val := fmt.Sprintf("Next %d", fileSystems.Length()+1)
-			fileSystems.Append(val)
-		}),
-	)
+func (f *FileRepoManagerDialog) Open() {
+	if f.popup == nil {
+		fsList := f.fileSystemList()
+		form := f.createForm()
+		content := container.NewHBox(fsList, form)
+		newButton := widget.NewButton("New", func() {
+			val := fmt.Sprintf("Next %d", f.fsList.Length()+1)
+			f.fsList.(binding.ExternalStringList).Append(val)
+		})
+		f.popup = NewCustomDialog(
+			f.Title,
+			content,
+			newButton,
+		)
+	}
+	f.popup.Show()
 }
 
-func createForm(nameData, descriptionData, addressData binding.String) *fyne.Container {
+func (f *FileRepoManagerDialog) createForm() *fyne.Container {
 	nameLabel := widget.NewLabel("Name: ")
-	nameEntry := widget.NewEntryWithData(nameData)
+	nameEntry := widget.NewEntryWithData(f.name)
 	descriptionLabel := widget.NewLabel("Description: ")
-	descriptionEntry := widget.NewEntryWithData(descriptionData)
+	descriptionEntry := widget.NewEntryWithData(f.description)
 	descriptionEntry.MultiLine = true
 	addressLabel := widget.NewLabel("Addresses (new line sperated):")
-	addressEntry := widget.NewEntryWithData(addressData)
+	addressEntry := widget.NewEntryWithData(f.addresses)
 	addressEntry.MultiLine = true
 
 	return container.NewVBox(
@@ -75,9 +90,9 @@ func createForm(nameData, descriptionData, addressData binding.String) *fyne.Con
 	)
 }
 
-func fileSystemList(data binding.DataList) *fyne.Container {
+func (f *FileRepoManagerDialog) fileSystemList() *fyne.Container {
 	list := widget.NewListWithData(
-		data,
+		f.fsList,
 		func() fyne.CanvasObject {
 			return widget.NewLabel("Connections")
 		},
