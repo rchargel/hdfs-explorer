@@ -6,7 +6,12 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type EventListener func(event interface{})
+type Event struct {
+	EventType   string
+	EventSource string
+}
+
+type EventListener func(event Event)
 
 type ListWithListener struct {
 	list     *widget.List
@@ -36,7 +41,13 @@ func (l *ClickableLabel) AddListener(listener EventListener) {
 
 func (l *ClickableLabel) Tapped(_ *fyne.PointEvent) {
 	for _, listener := range l.listeners {
-		listener(l.Text)
+		listener(Event{"click", l.Text})
+	}
+}
+
+func (l *ClickableLabel) DoubleTapped(_ *fyne.PointEvent) {
+	for _, listener := range l.listeners {
+		listener(Event{"dblclick", l.Text})
 	}
 }
 
@@ -56,21 +67,27 @@ func NewSelectableList(data binding.StringList) *ListWithListener {
 	return list
 }
 
-func (l *ListWithListener) labelClick(event interface{}) {
-	label := event.(string)
-
-	idx := l.getIndex(label)
-	if idx > -1 {
-		l.list.Select(idx)
-		if l.selected != idx {
-			l.selected = idx
-			for _, listener := range l.listeners {
-				listener(label)
-			}
+func (l *ListWithListener) labelClick(event Event) {
+	if event.EventType == "dblclick" {
+		for _, listener := range l.listeners {
+			listener(event)
 		}
-	} else {
-		l.list.Unselect(l.selected)
-		l.selected = -1
+	} else if event.EventType == "click" {
+		label := event.EventSource
+
+		idx := l.getIndex(label)
+		if idx > -1 {
+			l.list.Select(idx)
+			if l.selected != idx {
+				l.selected = idx
+				for _, listener := range l.listeners {
+					listener(event)
+				}
+			}
+		} else {
+			l.list.Unselect(l.selected)
+			l.selected = -1
+		}
 	}
 }
 

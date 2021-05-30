@@ -14,6 +14,6 @@ func init() {
 	if dir == "" {
 		dir, _ = os.UserHomeDir()
 	}
-	HomeDir = filepath.Join(dir, ".hsexplorer")
+	HomeDir = filepath.Join(dir, ".hdfs_exp")
 	os.MkdirAll(HomeDir, 0755)
 }

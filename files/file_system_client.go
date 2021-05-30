@@ -10,6 +10,7 @@ import (
 // FileSystemClient interface is an abstraction around requests to an hdfs file system.
 type FileSystemClient interface {
 	Close() error
+	Name() string
 	Upload(source, destination string) error
 	Download(source, destination string) error
 	Move(oldpath, newpath string) error
@@ -22,16 +23,21 @@ type FileSystemClient interface {
 }
 
 // CreateHDFSFileSystemClient wraps an hdfs.Client in order to produce the FileSystemClient interface.
-func CreateHDFSFileSystemClient(client *hdfs.Client) FileSystemClient {
-	return &hdfsFileSystemClient{client}
+func CreateHDFSFileSystemClient(name string, client *hdfs.Client) FileSystemClient {
+	return &hdfsFileSystemClient{name, client}
 }
 
 type hdfsFileSystemClient struct {
+	name   string
 	client *hdfs.Client
 }
 
 func (f *hdfsFileSystemClient) Close() error {
 	return f.client.Close()
+}
+
+func (f *hdfsFileSystemClient) Name() string {
+	return f.name
 }
 
 func (f *hdfsFileSystemClient) Upload(source, destination string) error {

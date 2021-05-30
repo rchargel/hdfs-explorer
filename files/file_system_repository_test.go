@@ -16,7 +16,7 @@ func validateLength(t *testing.T, fsr FileSystemRepository, expectedLength uint8
 	}
 }
 
-func validateRecordFound(t *testing.T, fsr FileSystemRepository) {
+func validateRecordFound(t *testing.T, fsr FileSystemRepository, addresses []string) {
 	fs, err := fsr.FindByName("My FS")
 	if err != nil {
 		t.Errorf("Unable to find record: %v", err.Error())
@@ -26,6 +26,18 @@ func validateRecordFound(t *testing.T, fsr FileSystemRepository) {
 	if fs.Description != "This is a description" {
 		t.Errorf("Invalid description: %v", fs.Description)
 		t.Fail()
+	}
+
+	if len(fs.Addresses) != len(addresses) {
+		t.Errorf("Invalid addresses: %d", len(fs.Addresses))
+		t.Fail()
+	}
+
+	for i, addr := range fs.Addresses {
+		if addr != addresses[i] {
+			t.Errorf("Invalid address: %v", addr)
+			t.Fail()
+		}
 	}
 }
 
@@ -67,12 +79,19 @@ func TestFileSystemRepository(t *testing.T) {
 	}
 
 	validateLength(t, fsr, 1)
-	validateRecordFound(t, fsr)
+	validateRecordFound(t, fsr, []string{"localhost:9000"})
 
 	// re-initialize
 	fsr = getRepository(t, path)
 	validateLength(t, fsr, 1)
-	validateRecordFound(t, fsr)
+	validateRecordFound(t, fsr, []string{"localhost:9000"})
+
+	fsr.Store(FileSystem{
+		Name:        "My FS",
+		Description: "This is a description",
+		Addresses:   []string{"localhost:9000", "localhost:9001"},
+	})
+	validateRecordFound(t, fsr, []string{"localhost:9000", "localhost:9001"})
 
 	if b := fsr.Remove("My FS"); b != nil {
 		t.Errorf("Error removing record: %v", b.Error())

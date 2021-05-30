@@ -30,12 +30,12 @@ func ShowConfirm(title, text string, callback func()) {
 	).Show()
 }
 
-func NewCustomDialog(title string, content fyne.CanvasObject, buttons ...*widget.Button) *widget.PopUp {
-	var modal *widget.PopUp
+func NewCustomDialog(title string, content fyne.CanvasObject, buttons ...*widget.Button) fyne.Window {
+	var win fyne.Window
 
 	closeButton := widget.NewButton(
 		"Close",
-		func() { modal.Hide() },
+		func() { win.Hide() },
 	)
 	buttonList := make([]fyne.CanvasObject, len(buttons)+2)
 	buttonList[0] = layout.NewSpacer()
@@ -47,12 +47,13 @@ func NewCustomDialog(title string, content fyne.CanvasObject, buttons ...*widget
 	}
 	buttonPanel := container.NewHBox(buttonList...)
 	container := container.NewBorder(
-		widget.NewLabel(title),
+		nil,
 		buttonPanel,
 		nil,
 		nil,
 		content,
 	)
-	modal = widget.NewModalPopUp(container, Window.Canvas())
-	return modal
+	win = Application.NewWindow(title)
+	win.SetContent(container)
+	return win
 }

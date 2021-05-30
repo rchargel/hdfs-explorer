@@ -46,7 +46,7 @@ func (r *FileSystem) Connect() (FileSystemClient, error) {
 				},
 			)
 			if cerr == nil {
-				return CreateHDFSFileSystemClient(client), err
+				return CreateHDFSFileSystemClient(r.Name, client), err
 			}
 			return nil, cerr
 		} else {

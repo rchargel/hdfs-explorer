@@ -2,21 +2,24 @@ package ui
 
 import (
 	"fyne.io/fyne/v2"
+	"github.com/rchargel/hdfs-explorer/files"
 )
 
 var fileRepoDialog *FileRepoManagerDialog = NewFileRepoManagerDialog()
 
-func MakeMainMenu() *fyne.MainMenu {
+type OpenClientConnection func(client files.FileSystemClient)
+
+func MakeMainMenu(clientConnectionFunc OpenClientConnection) *fyne.MainMenu {
 	return fyne.NewMainMenu(
-		makeConnectionMenu(),
+		makeConnectionMenu(clientConnectionFunc),
 	)
 }
 
-func makeConnectionMenu() *fyne.Menu {
+func makeConnectionMenu(clientConnectionFunc OpenClientConnection) *fyne.Menu {
 	manageConnections := &fyne.MenuItem{
 		Label: "Manage Connections",
 		Action: func() {
-			fileRepoDialog.Open()
+			fileRepoDialog.Open(OnNewConnection(clientConnectionFunc))
 		},
 	}
 

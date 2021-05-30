@@ -14,6 +14,8 @@ var (
 	onClosedFunc func() = func() {
 		ShowConfirm("Quit?", "Are you certain you wish to exit?", func() {
 			log.Info.Print("Exiting application by user request")
+			fileRepoDialog.Close()
+			closeAllBrowsers()
 			Window.Close()
 		})
 	}
@@ -24,8 +26,11 @@ func init() {
 	Application.Settings().SetTheme(theme.DarkTheme())
 
 	Window = Application.NewWindow("HDFS Explorer")
-	Window.SetMainMenu(MakeMainMenu())
+
+	fileBrowserTabs := NewFileBrowserTab()
+	Window.SetMainMenu(MakeMainMenu(fileBrowserTabs.AddConnection))
 	Window.SetIcon(resourceLogoPng)
+	Window.SetContent(fileBrowserTabs.Container())
 	Window.Resize(fyne.NewSize(700, 500))
 
 	Window.CenterOnScreen()
