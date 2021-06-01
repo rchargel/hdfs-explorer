@@ -1,8 +1,10 @@
 package files
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // FileExists validates that the specified path exists.
@@ -32,4 +34,25 @@ func GetOrCreateFile(path string) (*os.File, error) {
 		return os.Create(path)
 	}
 	return os.Open(path)
+}
+
+func Parent(path string) string {
+	return strings.ReplaceAll(filepath.Dir(path), "\\", "/")
+}
+
+func Join(path, file string) string {
+	return strings.ReplaceAll(filepath.Join(path, file), "\\", "/")
+}
+
+func FormatBytes(size uint64) string {
+	const unit = 1024
+	if size < unit {
+		return fmt.Sprintf("%d B", size)
+	}
+	div, exp := uint64(unit), 0
+	for n := size / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(size)/float64(div), "KMGTPE"[exp])
 }

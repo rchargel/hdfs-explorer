@@ -52,7 +52,7 @@ func (f *FileBrowserTabs) CloseAll() {
 func (f *FileBrowserTabs) getConnection(client string) int {
 	idx := 0
 	for _, conn := range f.browsers {
-		if conn.client.Name() == client {
+		if conn.name == client {
 			return idx
 		}
 		idx++

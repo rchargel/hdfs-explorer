@@ -1,63 +1,45 @@
 package ui
 
 import (
-	"image/color"
-
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
-	"fyne.io/fyne/v2/widget"
+	"fyne.io/fyne/v2/layout"
 	"github.com/rchargel/hdfs-explorer/files"
 )
 
 type FileBrowser struct {
-	client files.FileSystemClient
-	files  binding.StringList
-	path   string
+	name  string
+	files HdfsFileInfoList
+	path  string
 }
 
 func NewFileBrowser(client files.FileSystemClient) *FileBrowser {
-	b := &FileBrowser{client, binding.NewStringList(), "/"}
-	b.updateList()
+	b := &FileBrowser{client.Name(), NewHdfsFileInfoList(client), "/"}
+	b.update()
 	return b
 }
 
 func (b *FileBrowser) Tab() *container.TabItem {
-	// TODO implement custom widget for file exploration
-	l := widget.NewListWithData(
-		b.files,
-		func() fyne.CanvasObject {
-			t := canvas.NewText("template", color.Black)
-			return t
-		},
-		func(di binding.DataItem, co fyne.CanvasObject) {
-			t := co.(*canvas.Text)
-			str, _ := di.(binding.String).Get()
-			t.Text = str
-		},
-	)
-
-	return container.NewTabItem(
-		b.client.Name(),
-		container.NewMax(l),
-	)
+	l := NewFileDirectoryList(b.files, b.updatePath)
+	scroll := container.NewVScroll(l.container)
+	c := container.NewHBox(scroll, layout.NewSpacer())
+	return container.NewTabItem(b.name, c)
 }
 
 func (b *FileBrowser) Close() {
-	b.client.Close()
+	b.files.Close()
 }
 
-func (b *FileBrowser) updateList() {
+func (b *FileBrowser) update() {
 	go func() {
-		orig := make([]string, 0)
-		if b.path != "/" {
-			orig = append(orig, "..")
-		}
-		b.files.Set(orig)
-		info, _ := b.client.List(b.path)
-		for _, file := range info {
-			b.files.Append(file.Name())
-		}
+		b.files.UpdatePath(b.path)
 	}()
+}
+
+func (b *FileBrowser) updatePath(name string) {
+	if name == ".." {
+		b.path = files.Parent(b.path)
+	} else {
+		b.path = files.Join(b.path, name)
+	}
+	b.update()
 }
