@@ -63,6 +63,41 @@ func TestGetOrCreateFile(t *testing.T) {
 	os.Remove(file.Name())
 }
 
+func TestJoinAndParent(t *testing.T) {
+	path := "/"
+	if Join(path, "file") != "/file" {
+		t.Errorf("Join failed %v", Join(path, "file"))
+		t.Fail()
+	}
+	if Join(Join(path, "dir"), "file") != "/dir/file" {
+		t.Errorf("Join failed %v", Join(Join(path, "dir"), "file"))
+		t.Fail()
+	}
+	if Parent(Join(Join(path, "dir"), "file")) != "/dir" {
+		t.Errorf("Join failed %v", Parent(Join(Join(path, "dir"), "file")))
+		t.Fail()
+	}
+	if Parent(path) != "/" {
+		t.Errorf("Join failed %v", Parent(path))
+		t.Fail()
+	}
+}
+
+func TestFormatBytes(t *testing.T) {
+	if "100 B" != FormatBytes(100) {
+		t.Errorf("Failed format %d to %v", 100, FormatBytes(100))
+		t.Fail()
+	}
+	if "1.0 KB" != FormatBytes(1024) {
+		t.Errorf("Failed format %d to %v", 1024, FormatBytes(1024))
+		t.Fail()
+	}
+	if "2.0 MB" != FormatBytes(1024*1024*2) {
+		t.Errorf("Failed format %d to %v", 1024*1024*2, FormatBytes(1024*1024*2))
+		t.Fail()
+	}
+}
+
 func validateContent(t *testing.T, path, content string) {
 	f, err := GetOrCreateFile(path)
 	defer f.Close()
